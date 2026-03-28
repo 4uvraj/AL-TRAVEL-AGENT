@@ -7,7 +7,7 @@ const BUDGET_OPTIONS = [
   { label: '💎 Luxury', value: 'luxury' },
 ];
 
-export default function TripForm({ onResult, setLoading }) {
+export default function TripForm({ onResult, setLoading, setStatusMsg }) {
   const [form, setForm] = useState({
     destination: '',
     days: 3,
@@ -22,8 +22,9 @@ export default function TripForm({ onResult, setLoading }) {
     e.preventDefault();
     if (!form.destination.trim()) return;
     setLoading(true);
+    setStatusMsg(''); // Reset the message explicitly
     try {
-      const result = await planTrip(form);
+      const result = await planTrip(form, (msg) => setStatusMsg(msg));
       onResult(result);
     } catch (err) {
       console.error(err);

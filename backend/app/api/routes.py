@@ -7,20 +7,23 @@ from app.services.chat_service import run_chat
 router = APIRouter()
 
 
+from fastapi.responses import StreamingResponse
+
 @router.post("/plan-trip")
 def plan_trip(request: TripRequest):
     """
-    Invoke the full LangGraph multi-agent pipeline to generate a trip itinerary.
+    Invoke the full LangGraph multi-agent pipeline and stream progress.
     """
     try:
-        itinerary = run_travel_planner(
+        from app.agents.travel_graph import stream_travel_planner
+        generator = stream_travel_planner(
             destination=request.destination,
             days=request.days,
             budget_range=request.budget_range,
             preferences=request.preferences or "",
             start_date=request.start_date or "",
         )
-        return {"status": "success", "data": itinerary}
+        return StreamingResponse(generator, media_type="text/event-stream")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -435,3 +435,36 @@ def run_travel_planner(destination: str, days: int, budget_range: str,
     }
     result = travel_graph.invoke(initial_state)
     return result.get("final_itinerary") or {}
+
+def stream_travel_planner(destination: str, days: int, budget_range: str,
+                       preferences: str = "", start_date: str = ""):
+    """Stream LangGraph progress updates and the final result using SSE format."""
+    initial_state = {
+        "destination": destination, "days": days, "budget_range": budget_range,
+        "preferences": preferences, "start_date": start_date,
+        "planner_output": None, "places_output": None, "budget_output": None,
+        "route_output": None, "weather_output": None, "country_output": None,
+        "destination_coords": None, "final_itinerary": None, "error": None,
+    }
+    
+    status_map = {
+        "planner": "🧠 Planner Agent: Designing your logical day-by-day outline...",
+        "places_retrieval": "🔍 RAG Agent: Fetching verified hotels, restaurants & attractions...",
+        "budget": "💰 Budget Agent: Calculating realistic city-specific costs...",
+        "route_optimization": "🗺️ Route Agent: Optimizing route sequence using GPS logic...",
+        "weather_country": "🌦️ Weather Agent: Syncing live forecast & country metadata...",
+        "explainer": "✨ Explainer Agent: Assembling your final travel portfolio...",
+    }
+
+    try:
+        import json
+        for event in travel_graph.stream(initial_state, {"recursion_limit": 50}):
+            node_name = list(event.keys())[0]
+            if node_name in status_map:
+                yield f"data: {json.dumps({'type': 'progress', 'message': status_map[node_name]})}\n\n"
+            
+            if node_name == "explainer":
+                final_itinerary = event[node_name].get("final_itinerary") or {}
+                yield f"data: {json.dumps({'type': 'complete', 'result': final_itinerary})}\n\n"
+    except Exception as e:
+        yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"

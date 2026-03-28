@@ -5,43 +5,18 @@ import TripForm from './components/TripForm';
 import ItineraryView from './components/ItineraryView';
 import ChatView from './components/ChatView';
 
-const LOADING_STEPS = [
-  { key: 'planner',   label: '🧠 Planner Agent: Building real itinerary with actual places…' },
-  { key: 'rag',       label: '🔍 RAG Agent: Fetching real hotels, restaurants & attractions…' },
-  { key: 'budget',    label: '💰 Budget Agent: Calculating city-specific cost breakdown…' },
-  { key: 'route',     label: '🗺️ Route Agent: Optimizing sequence with real GPS coords…' },
-  { key: 'weather',   label: '🌦️ Weather Agent: Fetching live forecast & country info…' },
-  { key: 'explainer', label: '✨ Explainer Agent: Assembling your complete travel plan…' },
-];
-
-function LoadingState() {
-  const [step, setStep] = useState(0);
-  
-  // Animate steps every 1.5s
-  useState(() => {
-    let current = 0;
-    const interval = setInterval(() => {
-      current++;
-      if (current >= LOADING_STEPS.length) { clearInterval(interval); return; }
-      setStep(current);
-    }, 4500);
-    return () => clearInterval(interval);
-  });
-
+function LoadingState({ statusMsg }) {
   return (
     <div className="loading-state">
       <div className="loading-pulse">🌍</div>
       <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-        AI agents working on your perfect trip…
+        AI servers processing your trip in real-time...
       </p>
       <div className="loading-steps">
-        {LOADING_STEPS.map((s, i) => (
-          <div key={s.key} className={`loading-step ${i < step ? 'done' : i === step ? 'active' : ''}`}>
+          <div className="loading-step active">
             <div className="step-dot" />
-            <span>{s.label}</span>
-            {i < step && <span style={{ marginLeft: 'auto', color: 'var(--color-success)' }}>✓</span>}
+            <span>{statusMsg || "Connecting to Render.com cloud instance..."}</span>
           </div>
-        ))}
       </div>
     </div>
   );
@@ -70,6 +45,7 @@ function WelcomeState() {
 export default function App() {
   const [activeTab, setActiveTab] = useState('plan');
   const [loading, setLoading] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
   const [itinerary, setItinerary] = useState(null);
 
   const handleResult = (result) => {
@@ -79,7 +55,7 @@ export default function App() {
 
   const renderMainContent = () => {
     if (activeTab === 'chat') return <ChatView />;
-    if (loading) return <LoadingState />;
+    if (loading) return <LoadingState statusMsg={statusMsg} />;
     if (itinerary) return <ItineraryView itinerary={itinerary} />;
     return <WelcomeState />;
   };
@@ -120,7 +96,7 @@ export default function App() {
         {/* Sidebar — only shown on plan tab */}
         {activeTab === 'plan' && (
           <aside className="sidebar" aria-label="Trip Planning Form">
-            <TripForm onResult={handleResult} setLoading={setLoading} />
+            <TripForm onResult={handleResult} setLoading={setLoading} setStatusMsg={setStatusMsg} />
             {itinerary && (
               <button
                 id="clear-itinerary-btn"
