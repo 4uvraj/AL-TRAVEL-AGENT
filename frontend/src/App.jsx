@@ -5,18 +5,43 @@ import TripForm from './components/TripForm';
 import ItineraryView from './components/ItineraryView';
 import ChatView from './components/ChatView';
 
+const LOADING_STEPS = [
+  '🧠 Planner Agent: Designing your logical day-by-day outline...',
+  '🔍 RAG Agent: Fetching verified hotels, restaurants & attractions...',
+  '💰 Budget Agent: Calculating realistic city-specific costs...',
+  '🗺️ Route Agent: Optimizing route sequence using GPS logic...',
+  '🌦️ Weather Agent: Syncing live forecast & country metadata...',
+  '✨ Explainer Agent: Assembling your final travel portfolio...'
+];
+
 function LoadingState({ statusMsg }) {
+  let currentIndex = 0;
+  if (statusMsg) {
+    const foundIndex = LOADING_STEPS.findIndex(s => s === statusMsg);
+    if (foundIndex !== -1) {
+      currentIndex = foundIndex + 1;
+    }
+  }
+
   return (
     <div className="loading-state">
       <div className="loading-pulse">🌍</div>
       <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
         AI servers processing your trip in real-time...
       </p>
+      
+      <div className="progress-bar-container" style={{ width: '100%', height: '6px', background: '#333', borderRadius: '3px', margin: '20px 0', overflow: 'hidden' }}>
+        <div style={{ width: `${Math.min((currentIndex / LOADING_STEPS.length) * 100, 100)}%`, height: '100%', background: 'var(--color-primary)', transition: 'width 0.5s ease-out' }} />
+      </div>
+
       <div className="loading-steps">
-          <div className="loading-step active">
+        {LOADING_STEPS.map((label, i) => (
+          <div key={i} className={`loading-step ${i < currentIndex ? 'done' : i === currentIndex ? 'active' : ''}`} style={{ opacity: i > currentIndex ? 0.4 : 1 }}>
             <div className="step-dot" />
-            <span>{statusMsg || "Connecting to Render.com cloud instance..."}</span>
+            <span style={{ fontSize: '0.9rem' }}>{label}</span>
+            {i < currentIndex && <span style={{ marginLeft: 'auto', color: 'var(--color-success)' }}>✓</span>}
           </div>
+        ))}
       </div>
     </div>
   );
