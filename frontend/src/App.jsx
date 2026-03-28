@@ -24,7 +24,7 @@ function LoadingState() {
       current++;
       if (current >= LOADING_STEPS.length) { clearInterval(interval); return; }
       setStep(current);
-    }, 1800);
+    }, 4500);
     return () => clearInterval(interval);
   });
 
