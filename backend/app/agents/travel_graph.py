@@ -282,17 +282,12 @@ def weather_country_agent(state: AgentState) -> AgentState:
         state["weather_output"] = []
 
     # 3. Fetch country info — try to extract country from destination (heuristic)
-    # Ask LLM for country if not obvious, else try destination directly
-    country = None
-    try:
-        llm = _get_llm(0.0)
-        resp = llm.invoke([SystemMessage(content="Reply with only the country name, nothing else."),
-                           HumanMessage(content=f"What country is '{destination}' located in?")])
-        country = resp.content.strip()
-    except Exception:
-        country = destination  # fallback: use destination itself
-
-    state["country_output"] = get_country_info(country) or {}
+    # We no longer ask LLM for this to prevent unnecessary API rate limits!
+    # Instead, we just assume the destination string has enough info (e.g. "Paris, France" -> "France")
+    # Or rely on our RAG/Country API's fuzzy matching.
+    
+    country_hint = destination.split(",")[-1].strip() if "," in destination else destination
+    state["country_output"] = get_country_info(country_hint) or {}
     return state
 
 
