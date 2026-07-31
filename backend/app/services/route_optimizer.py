@@ -1,10 +1,8 @@
 """
 Route Optimization Service — Step 4 DSA Component
-Uses NetworkX to build a weighted graph of locations and find the
-minimum-cost Hamiltonian path (approx. TSP using nearest-neighbor heuristic).
-
-Now uses Nominatim (OpenStreetMap) for real GPS coordinates.
-Falls back to a reproducible pseudo-random coordinate if geocoding fails.
+Uses OSRM Table API (real-world driving distances) to build a weighted graph 
+of locations and find the minimum-cost Hamiltonian path (TSP using nearest-neighbor).
+Falls back to Haversine straight-line distance if API fails.
 """
 import networkx as nx
 import math
@@ -12,7 +10,7 @@ import random
 from typing import List, Dict, Any, Optional
 
 from app.services.geo_service import geocode_city
-
+from app.services.real_data_service import get_distance_matrix
 
 # ── Coordinates cache (populated from Nominatim at runtime) ──────────────────
 _coord_cache: Dict[str, tuple] = {
@@ -57,8 +55,6 @@ def _get_coords(location: str, city_hint: str = "") -> tuple:
     # Instead of geocoding every single place (which blocks for 1 sec each),
     # we just use the city center and scatter the points deterministically.
     # This guarantees O(1) latency and prevents OpenStreetMap rate limiting.
-
-    # Deterministic pseudo-random fallback (same general area if city found)
     city_coords = geocode_city(city_hint) if city_hint else None
     if city_coords:
         seed = sum(ord(c) for c in location)
@@ -73,28 +69,11 @@ def _get_coords(location: str, city_hint: str = "") -> tuple:
     return (rng.uniform(8.0, 35.0), rng.uniform(68.0, 97.0))  # India bounding box
 
 
-def build_location_graph(locations: List[str], city_hint: str = "") -> nx.Graph:
-    """Build a complete weighted undirected graph; edge weight = distance in km."""
-    G = nx.Graph()
-    for loc in locations:
-        coords = _get_coords(loc, city_hint)
-        G.add_node(loc, coords=coords)
-
-    for i, a in enumerate(locations):
-        for j, b in enumerate(locations):
-            if i < j:
-                ca = _get_coords(a, city_hint)
-                cb = _get_coords(b, city_hint)
-                dist = _haversine(ca[0], ca[1], cb[0], cb[1])
-                G.add_edge(a, b, weight=dist)
-    return G
-
-
 def nearest_neighbor_tsp(locations: List[str], start: Optional[str] = None,
-                          city_hint: str = "") -> List[str]:
+                          city_hint: str = "", dist_matrix: list = None) -> List[str]:
     """
     Nearest-neighbour greedy heuristic for TSP.
-    Complexity: O(n²) — acceptable for itinerary sizes (< 30 stops).
+    Uses OSRM real driving distances if provided, otherwise falls back to Haversine.
     """
     if not locations:
         return []
@@ -107,11 +86,20 @@ def nearest_neighbor_tsp(locations: List[str], start: Optional[str] = None,
     unvisited.remove(current)
 
     while unvisited:
-        cc = _get_coords(current, city_hint)
-        nearest = min(
-            unvisited,
-            key=lambda loc: _haversine(cc[0], cc[1], *_get_coords(loc, city_hint))
-        )
+        if dist_matrix:
+            # Use OSRM matrix
+            current_idx = locations.index(current)
+            nearest = min(
+                unvisited,
+                key=lambda loc: dist_matrix[current_idx][locations.index(loc)]
+            )
+        else:
+            # Haversine fallback
+            cc = _get_coords(current, city_hint)
+            nearest = min(
+                unvisited,
+                key=lambda loc: _haversine(cc[0], cc[1], *_get_coords(loc, city_hint))
+            )
         tour.append(nearest)
         unvisited.remove(nearest)
         current = nearest
@@ -123,31 +111,56 @@ def optimize_route(locations: List[str], start_location: Optional[str] = None,
                    city_hint: str = "") -> Dict[str, Any]:
     """
     Main entry-point: builds a real-GPS-weighted graph and returns the
-    optimized visiting sequence with distances and travel estimates.
+    optimized visiting sequence with real OSRM driving distances and times.
     """
     if not locations:
         return {"sequence": [], "total_distance_km": 0.0,
                 "estimated_travel_hours": 0.0, "route_details": []}
 
-    tour = nearest_neighbor_tsp(locations, start_location, city_hint)
-    G   = build_location_graph(tour, city_hint)
-
+    # Gather coordinates for all locations
+    coords_list = [_get_coords(loc, city_hint) for loc in locations]
+    
+    # Try fetching real driving distances from OSRM
+    dist_matrix, dur_matrix = get_distance_matrix(coords_list)
+    
+    # Solve TSP
+    tour = nearest_neighbor_tsp(locations, start_location, city_hint, dist_matrix)
+    
     total_dist = 0.0
+    total_time_mins = 0.0
     route_details = []
+    
     for i in range(len(tour) - 1):
         a, b = tour[i], tour[i + 1]
-        dist = G[a][b]["weight"]
+        idx_a = locations.index(a)
+        idx_b = locations.index(b)
+        
+        # Pull real data from OSRM if available, else Haversine math
+        if dist_matrix and dur_matrix:
+            dist = dist_matrix[idx_a][idx_b]
+            mins = dur_matrix[idx_a][idx_b]
+        else:
+            ca, cb = _get_coords(a, city_hint), _get_coords(b, city_hint)
+            dist = _haversine(ca[0], ca[1], cb[0], cb[1])
+            mins = (dist / 30) * 60  # fallback: city speed 30 km/h
+            
         total_dist += dist
+        total_time_mins += mins
+        
         route_details.append({
             "from": a,
             "to":   b,
             "distance_km":        round(dist, 2),
-            "estimated_minutes":  round((dist / 30) * 60),  # city speed 30 km/h
+            "estimated_minutes":  round(mins),
+            "from_coords": list(_get_coords(a, city_hint)),
+            "to_coords": list(_get_coords(b, city_hint)),
         })
 
     return {
         "sequence":               tour,
         "total_distance_km":      round(total_dist, 2),
-        "estimated_travel_hours": round(total_dist / 30, 2),
+        "estimated_travel_hours": round(total_time_mins / 60, 2),
         "route_details":          route_details,
+        "coordinates": {loc: list(_get_coords(loc, city_hint)) for loc in tour},
+        "center": list(geocode_city(city_hint)) if city_hint else None
     }

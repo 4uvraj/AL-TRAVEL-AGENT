@@ -1,16 +1,74 @@
+import MapView from './MapView';
+import BudgetCharts from './BudgetCharts';
+import PdfExport from './PdfExport';
+
 const TYPE_ICONS = {
-  attraction: '🏛️',
-  museum: '🖼️',
-  hotel: '🏨',
-  restaurant: '🍽️',
-  park: '🌿',
-  beach: '🏖️',
-  shopping: '🛍️',
-  default: '📍',
+  attraction: '🏛️', museum: '🖼️', hotel: '🏨', restaurant: '🍽️',
+  park: '🌿', beach: '🏖️', shopping: '🛍️', temple: '🛕', market: '🏪', default: '📍',
 };
 
 function getIcon(type = '') {
   return TYPE_ICONS[type.toLowerCase()] || TYPE_ICONS.default;
+}
+
+function StarRating({ stars = 3 }) {
+  return (
+    <span style={{ color: '#fcd34d', fontSize: '0.8rem', letterSpacing: '1px' }}>
+      {'★'.repeat(Math.min(stars, 5))}{'☆'.repeat(Math.max(0, 5 - stars))}
+    </span>
+  );
+}
+
+function ImageTooltip({ text, image }) {
+  if (!image) return <span>{text}</span>;
+  return (
+    <div className="image-tooltip-container">
+      <span className="tooltip-trigger">{text}</span>
+      <div className="tooltip-content">
+        <img src={image} alt={text} />
+      </div>
+    </div>
+  );
+}
+
+function HeroBanner({ destination, summary, image, totalDays, travelStyle, onExport }) {
+  return (
+    <div className="hero-banner animate-fadeInUp" style={{
+      position: 'relative',
+      borderRadius: 'var(--radius-lg)',
+      overflow: 'hidden',
+      minHeight: '240px',
+      display: 'flex',
+      alignItems: 'flex-end',
+    }}>
+      <div style={{
+        position: 'absolute', inset: 0,
+        backgroundImage: image ? `url(${image})` : 'linear-gradient(135deg, #1e1b4b, #0f172a)',
+        backgroundSize: 'cover', backgroundPosition: 'center',
+        filter: 'brightness(0.45)',
+      }} />
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(to top, rgba(8,12,20,0.95) 0%, rgba(8,12,20,0.3) 60%, transparent 100%)',
+      }} />
+      <div style={{ position: 'relative', padding: '28px 28px 24px', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 style={{
+              fontSize: '2.2rem', color: '#fff', marginBottom: '6px',
+              textShadow: '0 2px 20px rgba(0,0,0,0.5)',
+            }}>✈️ {destination}</h1>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.92rem', maxWidth: '600px' }}>{summary}</p>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+              <span className="badge badge-primary">🗓️ {totalDays} Days</span>
+              <span className="badge badge-cyan">🎯 {travelStyle}</span>
+            </div>
+          </div>
+          {onExport}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function CountryBanner({ info }) {
@@ -18,10 +76,8 @@ function CountryBanner({ info }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '14px',
-      padding: '14px 18px',
-      borderRadius: 'var(--radius-md)',
-      background: 'var(--color-surface)',
-      border: '1px solid var(--color-border)',
+      padding: '14px 18px', borderRadius: 'var(--radius-md)',
+      background: 'var(--color-surface)', border: '1px solid var(--color-border)',
       flexWrap: 'wrap',
     }}>
       {info.flag_url && (
@@ -54,15 +110,28 @@ function BudgetCard({ label, value, colorClass }) {
   );
 }
 
-function ActivityItem({ activity }) {
+function ActivityItem({ activity, image }) {
   const icon = getIcon(activity.type);
   return (
-    <div className="activity-item">
-      <div className={`activity-icon${activity.type === 'hotel' ? ' hotel' : activity.type === 'restaurant' ? ' restaurant' : ''}`}>
-        {icon}
-      </div>
+    <div className="activity-item" style={{ position: 'relative', overflow: 'hidden' }}>
+      {image && (
+        <div style={{
+          width: '64px', height: '64px', borderRadius: '10px', overflow: 'hidden',
+          flexShrink: 0, border: '1px solid var(--color-border)',
+        }}>
+          <img src={image} alt={activity.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={e => { e.target.style.display = 'none'; }}
+          />
+        </div>
+      )}
+      {!image && (
+        <div className={`activity-icon${activity.type === 'hotel' ? ' hotel' : activity.type === 'restaurant' ? ' restaurant' : ''}`}>
+          {icon}
+        </div>
+      )}
       <div className="activity-info">
-        <h4>{activity.name}</h4>
+        <h4><ImageTooltip text={activity.name} image={image} /></h4>
         <p>{activity.description}</p>
         {activity.rating && (
           <span style={{ fontSize: '0.72rem', color: '#fcd34d', marginTop: '2px', display: 'block' }}>
@@ -71,13 +140,13 @@ function ActivityItem({ activity }) {
         )}
       </div>
       <div className="activity-cost">
-        {activity.cost > 0 ? `₹${activity.cost}` : 'Free'}
+        {activity.cost > 0 ? `₹${activity.cost.toLocaleString()}` : 'Free'}
       </div>
     </div>
   );
 }
 
-function DayCard({ day, index }) {
+function DayCard({ day, index, placeImages }) {
   const w = day.weather;
   return (
     <div className="day-card" style={{ animationDelay: `${index * 0.08}s` }}>
@@ -103,7 +172,7 @@ function DayCard({ day, index }) {
 
       <div className="day-card-body">
         {(day.activities || []).map((act, i) => (
-          <ActivityItem key={i} activity={act} />
+          <ActivityItem key={i} activity={act} image={placeImages?.[act.name]} />
         ))}
         {(!day.activities || day.activities.length === 0) && (
           <div style={{ padding: '16px', color: 'var(--color-text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
@@ -114,9 +183,25 @@ function DayCard({ day, index }) {
 
       <div className="day-footer">
         <div className="hotel-info">
-          <span>🏨</span> {day.hotel || 'Hotel TBD'}
+          <span>🏨</span>
+          <div>
+            <ImageTooltip text={day.hotel || 'Hotel TBD'} image={placeImages?.[day.hotel]} />
+            {day.hotel_stars > 0 && (
+              <span style={{ marginLeft: '8px' }}><StarRating stars={day.hotel_stars} /></span>
+            )}
+            {day.hotel_price > 0 && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-accent)', marginLeft: '8px' }}>
+                ₹{day.hotel_price.toLocaleString()}/night
+              </span>
+            )}
+          </div>
         </div>
         <div className="day-total">
+          {day.transport_mode && (
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginRight: '10px' }}>
+              🚗 {day.transport_mode}
+            </span>
+          )}
           🍽️ ₹{day.meals_cost?.toLocaleString()} · 🚌 ₹{day.transport_cost?.toLocaleString()} · Total: <em>₹{day.day_total?.toLocaleString()}</em>
         </div>
       </div>
@@ -128,7 +213,7 @@ function RouteCard({ route }) {
   if (!route || !route.sequence || route.sequence.length === 0) return null;
   return (
     <div className="route-card">
-      <h3>🗺️ Optimized Route <span className="badge badge-green" style={{ marginLeft: '8px' }}>Dijkstra TSP</span></h3>
+      <h3>🗺️ Optimized Route <span className="badge badge-green" style={{ marginLeft: '8px' }}>Nearest-Neighbor TSP</span></h3>
       <div className="route-stops">
         {route.sequence.map((stop, i) => (
           <div key={i} className="route-stop-pill">
@@ -148,28 +233,25 @@ function RouteCard({ route }) {
 
 export default function ItineraryView({ itinerary }) {
   if (!itinerary) return null;
-  const budget  = itinerary.budget || {};
+  const budget = itinerary.budget || {};
   const country = itinerary.country_info || null;
+  const placeImages = itinerary.place_images || {};
 
   return (
     <div className="itinerary-view">
-      {/* Header */}
-      <div className="itinerary-header animate-fadeInUp">
-        <div className="itinerary-title">
-          <h1>✈️ {itinerary.destination}</h1>
-          <p>{itinerary.summary}</p>
-          <div className="itinerary-meta">
-            <span className="badge badge-primary">🗓️ {itinerary.total_days} Days</span>
-            <span className="badge badge-cyan">🎯 {itinerary.travel_style}</span>
-            {(itinerary.recommendations || []).slice(0, 2).map((r, i) => (
-              <span key={i} className="badge badge-amber">📍 {r}</span>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Hero Banner with Destination Image */}
+      <HeroBanner
+        destination={itinerary.destination}
+        summary={itinerary.summary}
+        image={itinerary.destination_image}
+        totalDays={itinerary.total_days}
+        travelStyle={itinerary.travel_style}
+        onExport={<PdfExport destination={itinerary.destination} />}
+      />
 
       {/* Country Info Banner */}
-      <CountryBanner info={country} destination={itinerary.destination} />
+      <CountryBanner info={country} />
+
       {/* Budget Summary */}
       <div className="budget-summary animate-fadeInUp">
         <BudgetCard label="🏨 Accommodation" value={budget.accommodation_total} colorClass="primary" />
@@ -179,12 +261,18 @@ export default function ItineraryView({ itinerary }) {
         <BudgetCard label="💰 Grand Total" value={budget.grand_total} colorClass="grand" />
       </div>
 
+      {/* Budget Charts */}
+      <BudgetCharts budget={budget} days={itinerary.days} />
+
       {/* Route Card */}
       <RouteCard route={itinerary.optimized_route} />
 
+      {/* Interactive Map */}
+      <MapView route={itinerary.optimized_route} />
+
       {/* Day Cards */}
       {(itinerary.days || []).map((day, i) => (
-        <DayCard key={day.day} day={day} index={i} />
+        <DayCard key={day.day} day={day} index={i} placeImages={placeImages} />
       ))}
 
       {/* Tips */}

@@ -52,6 +52,8 @@
   gap: 0;
   flex: 1;
   min-height: calc(100vh - 64px);
+  position: relative;
+  z-index: 1;
 }
 @media (max-width: 900px){
   .app-layout { grid-template-columns: 1fr; }

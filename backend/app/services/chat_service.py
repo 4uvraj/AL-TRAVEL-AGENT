@@ -3,7 +3,13 @@ Chat service — wraps a simple LangChain ConversationChain for follow-up querie
 about an already-planned trip or general travel advice.
 """
 import os
+from pathlib import Path
 from typing import List, Dict
+from dotenv import load_dotenv
+
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
+
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 

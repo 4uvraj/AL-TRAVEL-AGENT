@@ -11,9 +11,12 @@ Agents:
 All agents share a typed AgentState dict passed through the LangGraph StateGraph.
 """
 import os, json
+from pathlib import Path
 from typing import TypedDict, List, Optional, Any
 from dotenv import load_dotenv
 
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path, override=True)
 load_dotenv(override=True)
 
 from langchain_openai import ChatOpenAI
@@ -69,6 +72,10 @@ def planner_agent(state: AgentState) -> AgentState:
     }
     budget_desc = budget_map.get(state['budget_range'], state['budget_range'])
 
+    from app.services.real_data_service import fetch_real_hotels
+    real_hotels = fetch_real_hotels(state['destination'])
+    hotels_str = ", ".join(real_hotels)
+
     prompt = f"""You are an expert travel planner with encyclopedic knowledge of real hotels, restaurants, and attractions worldwide.
 
 Create a detailed {state['days']}-day itinerary for a {budget_desc} visiting {state['destination']}.
@@ -77,10 +84,10 @@ Start date: {state['start_date'] or 'flexible'}
 
 CRITICAL RULES:
 - ABSOLUTELY NO HALLUCINATIONS: You must guarantee that every single place, hotel, and attraction actually exists exactly in or directly adjacent to {state['destination']}.
+- For the hotel_name, you MUST choose exactly ONE of these verifiably real hotels currently operating in {state['destination']}: [{hotels_str}]. Do NOT invent a hotel.
 - If you don't confidently know 3 real places for a day, use major verified regional landmarks. Do not invent names.
 - meals_cost and transport_cost MUST be realistic INR amounts for {state['destination']} (e.g. Goa beach shack meal ≈ ₹300-800, auto ≈ ₹100-300)
 - Each day should have a unique theme and real named places to visit
-- Hotel must actually exist in {state['destination']}
 - DO NOT use placeholder names like "place1" or "Hotel ABC"
 
 Return ONLY valid JSON (no markdown, no extra text):
@@ -95,6 +102,9 @@ Return ONLY valid JSON (no markdown, no extra text):
       "theme": "string — specific theme for this day (e.g. 'North Goa Beaches & Nightlife')",
       "planned_places": ["Real Place Name 1", "Real Place Name 2", "Real Place Name 3"],
       "hotel_name": "Real existing hotel name in {state['destination']}",
+      "hotel_price_per_night": <realistic INR integer per night for this hotel>,
+      "hotel_stars": <1-5 integer star rating matching {state['budget_range']}>,
+      "transport_mode": "primary transport mode for this day (auto-rickshaw/taxi/bus/metro/rental scooter)",
       "meals_cost": <realistic INR integer for {state['destination']} {state['budget_range']}>,
       "transport_cost": <realistic INR integer>
     }}
@@ -355,6 +365,9 @@ def explainer_agent(state: AgentState) -> AgentState:
             "theme": d.get("theme", "Exploration"),
             "activities": activities,
             "hotel": d.get("hotel_name", "Local Hotel"),
+            "hotel_price": d.get("hotel_price_per_night", 0),
+            "hotel_stars": d.get("hotel_stars", 3),
+            "transport_mode": d.get("transport_mode", "taxi"),
             "meals_cost": round(d.get("meals_cost", 2000) * multiplier, 2),
             "transport_cost": round(d.get("transport_cost", 500) * multiplier, 2),
             "activities_cost": round(sum(a["cost"] for a in activities), 2),
@@ -366,7 +379,22 @@ def explainer_agent(state: AgentState) -> AgentState:
             "weather": day_weather,
         })
 
+    from app.services.image_service import get_destination_image, get_place_images
+
+    # Fetch destination hero image
+    destination_image = get_destination_image(state["destination"])
+    
+    # Fetch place images
+    all_place_names = []
+    for d in plan.get("days", []):
+        all_place_names.extend(d.get("planned_places", []))
+        if d.get("hotel_name"):
+            all_place_names.append(d.get("hotel_name"))
+    place_images = get_place_images(all_place_names, state["destination"])
+
     state["final_itinerary"] = {
+        "destination_image": destination_image,
+        "place_images": place_images,
         "destination": state["destination"],
         "total_days": state["days"],
         "travel_style": plan.get("travel_style", state["budget_range"]),

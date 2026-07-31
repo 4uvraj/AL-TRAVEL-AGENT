@@ -87,8 +87,22 @@ export default function App() {
 
   return (
     <>
+      {/* Dynamic Destination Background */}
+      {itinerary?.destination_image && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundImage: `url(${itinerary.destination_image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'brightness(0.35) blur(6px)',
+          zIndex: 0,
+          transition: 'opacity 1s ease-in-out'
+        }} />
+      )}
+
       {/* Navbar */}
-      <nav className="navbar">
+      <nav className="navbar" style={{ background: itinerary?.destination_image ? 'rgba(8, 12, 20, 0.6)' : 'var(--color-bg)' }}>
         <a className="navbar-logo" href="/" aria-label="AI Travel Copilot Home">
           <div className="logo-icon">✈️</div>
           AI Travel Copilot

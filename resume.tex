@@ -1,0 +1,196 @@
+%-------------------------
+% Resume in Latex
+% Author : Jake Gutierrez
+% Based off of: https://github.com/sb2nov/resume
+% License : MIT
+%------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Margins
+\addtolength{\oddsidemargin}{-0.6in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.19in}
+\addtolength{\topmargin}{-.7in}
+\addtolength{\textheight}{1.4in}
+
+\urlstyle{same}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+% Sections formatting
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-5pt}]
+
+\pdfgentounicode=1
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{{#1 \vspace{-2pt}}}
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.001\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2}\\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-4pt}}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-5pt}}
+
+%-------------------------------------------
+\begin{document}
+
+%----------HEADING----------
+\begin{center}
+    {\Huge \scshape Yuvraj Kag} \\ \vspace{5pt}
+    \small
+    \raisebox{-0.1\height}\faPhone\ +91-7489501392 ~
+    \href{mailto:yuvrajkag2003@gmail.com}{\raisebox{-0.2\height}\faEnvelope\ \underline{yuvrajkag2003@gmail.com}} ~
+    \href{https://linkedin.com/in/4uvraj}{\raisebox{-0.2\height}\faLinkedin\ \underline{linkedin.com/in/4uvraj}} ~
+    \href{https://github.com/4uvraj}{\raisebox{-0.2\height}\faGithub\ \underline{github.com/4uvraj}}
+    \vspace{-8pt}
+\end{center}
+
+%-----------EDUCATION-----------
+\section{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Indian Institute of Information Technology, Bhopal}{Sep. 2023 -- May 2027}
+      {Bachelor of Technology in Electronics and Communication Engineering \textbf{(CGPA: 7.88)}}{Bhopal, India}
+  \resumeSubHeadingListEnd
+
+%-----------TECHNICAL SKILLS-----------
+\section{Technical Skills}
+ \begin{itemize}[leftmargin=0.15in, label={}]
+    \small{\item{
+     \textbf{Languages}{: Python, SQL} \\
+     \textbf{AI / Machine Learning}{: Machine Learning, Deep Learning, Computer Vision} \\
+     \textbf{Libraries}{: TensorFlow, NumPy, Pandas, Matplotlib, Streamlit, Scikit-learn} \\
+     \textbf{AI Tools}{: LangChain, FAISS, HuggingFace Transformers} \\
+     \textbf{Concepts}{: RAG (Retrieval-Augmented Generation), Vector Databases, Prompt Engineering} \\
+     \textbf{Developer Tools}{: Git, GitHub, VS Code, Google Colab} \\
+     \textbf{Data Structures}{: Arrays, Hashing, Matrix, Recursion}
+    }}
+ \end{itemize}
+ \vspace{-16pt}
+
+%-----------PROJECTS-----------
+\section{Projects}
+\vspace{-5pt}
+\resumeSubHeadingListStart
+
+  \resumeProjectHeading
+    {\textbf{AI Travel Copilot} $|$ \emph{React, Node.js, OpenAI GPT-4, Python, RAG, Vercel, Render} $|$ \href{https://github.com/4uvraj/AL-TRAVEL-AGENT}{Code}}{Mar 2026}
+    \resumeItemListStart
+      \resumeItem{Reduced itinerary generation latency by \textbf{\textasciitilde60\%} using \textbf{Server-Sent Events (SSE)} streaming instead of batch API responses.}
+      \resumeItem{Built a \textbf{RAG-based} recommendation engine with vector indexing of \textbf{50+ travel destinations} for context-aware personalization.}
+      \resumeItem{Designed a full-stack application with REST APIs delivering complete travel itineraries in \textbf{under 5 seconds}.}
+      \resumeItem{Deployed scalable services across \textbf{Vercel} (frontend) and \textbf{Render} (backend) ensuring reliable end-to-end communication.}
+    \resumeItemListEnd
+
+  \resumeProjectHeading
+    {\textbf{PDF-RAG Chatbot} $|$ \emph{LangChain, FAISS, HuggingFace, Streamlit} $|$ \href{https://github.com/4uvraj/PDF-RAG}{Code}}{Feb 2026}
+    \resumeItemListStart
+      \resumeItem{Engineered a \textbf{Retrieval-Augmented Generation chatbot} for natural language Q\&A over PDF documents.}
+      \resumeItem{Implemented document parsing, chunking, and embedding generation using \textbf{HuggingFace} transformer models.}
+      \resumeItem{Indexed \textbf{100+ document embeddings} using \textbf{FAISS} to enable fast semantic search and retrieval.}
+      \resumeItem{Built an interactive \textbf{Streamlit} interface for real-time document querying with \textbf{sub-2 second} response time.}
+    \resumeItemListEnd
+
+  \resumeProjectHeading
+    {\textbf{Weather AI Web App} $|$ \emph{Python, Streamlit, REST APIs} $|$ \href{https://github.com/4uvraj/Weather-AI-Streamlit}{Code}}{Jan 2026}
+    \resumeItemListStart
+      \resumeItem{Developed a real-time weather forecasting app integrating \textbf{live weather APIs} for forecasts across \textbf{multiple cities}.}
+      \resumeItem{Designed an interactive UI with dynamic visualizations for temperature trends, weather conditions, and hourly forecasts.}
+      \resumeItem{Implemented location-based search enabling users to retrieve accurate weather data for \textbf{any global city} instantly.}
+    \resumeItemListEnd
+
+  \resumeProjectHeading
+    {\textbf{Movie Recommendation System} $|$ \emph{Python, Machine Learning, Pandas, Scikit-learn} $|$ \href{https://github.com/4uvraj/Movie_Recommender}{Code}}{Nov 2025}
+    \resumeItemListStart
+      \resumeItem{Built a \textbf{content-based filtering} system processing \textbf{5,000+ movie records} using cosine similarity for personalized suggestions.}
+      \resumeItem{Applied \textbf{TF-IDF vectorization} on movie metadata (genre, cast, crew) to compute similarity scores across the entire dataset.}
+      \resumeItem{Designed an end-to-end recommendation pipeline from data preprocessing to ranked result generation.}
+    \resumeItemListEnd
+
+\resumeSubHeadingListEnd
+\vspace{-13pt}
+
+%-----------CERTIFICATIONS-----------
+\section{Certifications}
+\resumeSubHeadingListStart
+  \resumeSubheading
+    {Full Stack Data Science Program}{2025 -- 2026}
+    {AlmaBetter}{}
+    \resumeItemListStart
+      \resumeItem{Completed a comprehensive program covering \textbf{Machine Learning, Data Analysis, and Data Visualization}.}
+      \resumeItem{Worked extensively with Python, Pandas, NumPy, Scikit-learn, and SQL on real-world datasets.}
+      \resumeItem{Delivered capstone projects including a \textbf{movie recommendation system} and a full \textbf{data analysis pipeline}.}
+    \resumeItemListEnd
+\resumeSubHeadingListEnd
+\vspace{-10pt}
+
+%-----------ACHIEVEMENTS-----------
+\section{Achievements}
+\resumeItemListStart
+  \resumeItem{Solved \textbf{200+ Data Structures \& Algorithms} problems on \textbf{LeetCode}, with strong command over arrays, hashing, matrix, and recursion patterns.}
+  \resumeItem{Consistently maintained a \textbf{CGPA of 7.88} at IIIT Bhopal while building and deploying multiple AI/ML projects independently.}
+\resumeItemListEnd
+\vspace{-6pt}
+
+%-----------RELEVANT COURSEWORK-----------
+\section{Relevant Coursework}
+    \begin{multicols}{3}
+        \begin{itemize}[itemsep=-5pt, parsep=3pt]
+            \item\small Artificial Intelligence
+            \item Machine Learning
+            \item Data Structures \& Algorithms
+            \item Database Management Systems
+        \end{itemize}
+    \end{multicols}
+    \vspace*{2.0\multicolsep}
+
+\end{document}
