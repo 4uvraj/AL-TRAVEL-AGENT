@@ -131,7 +131,7 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:5173** and start planning! 🌍
+Open https://al-travel-agent.vercel.app/ and start planning! 🌍
 
 ---
 
